@@ -41,6 +41,7 @@ class Venue(db.Model):
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    genres = db.Column(db.String(120))
     artists = db.relationship('Artist',backref = 'artists' , lazy = True)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate [DONE]
@@ -66,7 +67,7 @@ class Show(db.Model):
 
     artist_id = db.Column(db.Integer , db.ForeignKey('Artist.id'), primary_key=True)
     venue_id = db.Column(db.Integer , db.ForeignKey('Venue.id'), primary_key=True)
-    start_time = db.Column(db.DateTime , nullable=False,default=datetime.utcnow)
+    start_time = db.Column(db.DateTime , nullable=False)
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -245,18 +246,19 @@ def create_venue_submission():
     try:
         # load data from user input on submit
         form = VenueForm()
-        id = form.id.data
+        # id = form.id.data
         name = form.name.data
         city = form.city.data
         state = form.state.data
         address = form.address.data
         phone = form.phone.data
-        image_link = form.image_link.data
+        genres = form.genres.data
+        # image_link = form.image_link.data
         facebook_link = form.facebook_link.data
 
         # create new Venue from form data
-        new_venue = Venue( id = id , name = name , city = city , state = state,
-        address = address , phone = phone , image_link = image_link , facebook_link = facebook_link )
+        new_venue = Venue( name = name , city = city , state = state,
+        address = address , phone = phone , facebook_link = facebook_link , genres = genres)
 
         # TODO: modify data to be the data object returned from db insertion [Done]
         # add new venue to session and commit to database
@@ -269,6 +271,7 @@ def create_venue_submission():
     except:
         # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
         flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
+        print(sys.exc_info())
         db.session.rollback()
     finally:
         db.session.close()
@@ -463,7 +466,7 @@ def create_artist_submission():
     # TODO: insert form data as a new Venue record in the db, instead [Done]
     try:
         form = ArtistForm()
-        id = form.id.data
+        # id = form.id.data
         name = form.name.data
         city = form.city.data
         state = form.state.data
@@ -473,7 +476,7 @@ def create_artist_submission():
         facebook_link = form.facebook_link.data
 
         # create new Artist from form data
-        new_artist = Artist( id = id , name = name , city = city , state = state ,
+        new_artist = Artist( name = name , city = city , state = state ,
         phone = phone , genres = genres , image_link = image_link , facebook_link = facebook_link)
 
         # TODO: modify data to be the data object returned from db insertion [Done]
@@ -553,13 +556,13 @@ def create_show_submission():
     # TODO: insert form data as a new Show record in the db, instead [Done]
     try:
         form = ShowForm()
-        id = form.id.data
+        # id = form.id.data
         artist_id = form.artist_id.data
         venue_id = form.venue_id.data
         start_time = form.start_time.data
 
         # create new Show from form data
-        new_show = Show(id = id , artist_id = artist_id , venue_id = venue_id , start_time = start_time)
+        new_show = Show(artist_id = artist_id , venue_id = venue_id , start_time = start_time)
 
         # add new artist to session and commit to database
         db.session.add(new_show)
@@ -573,6 +576,7 @@ def create_show_submission():
         # TODO: on unsuccessful db insert, flash an error instead. [Done]
         # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
         flash('An error occurred. Show could not be listed.')
+        print(sys.exc_info())
         db.session.rollback()
 
     finally:
