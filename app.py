@@ -10,9 +10,10 @@ from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 from forms import *
 from flask_migrate import Migrate
+import sys
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -95,30 +96,41 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
-  return render_template('pages/venues.html', areas=data);
+    # TODO: replace with real venues data. [Done]
+    #       num_shows should be aggregated based on number of upcoming shows per venue.
+    # MOCK UP :
+    # data=[{
+    #   "city": "New York",
+    #   "state": "NY",
+    #   "venues": [{
+    #     "id": 2,
+    #     "name": "The Dueling Pianos Bar",
+    #     "num_upcoming_shows": 0,
+    #   }]
+    # }]
+    data = []
+    venues = Venue.query.all()
+    venue_cities = set()
+    for venue in venues:
+        venue_cities.add((venue.city,venue.state))
+
+    for a in venue_cities:
+        data.append({"city":a[0],"state":a[1],"venues":[]})
+
+    # get number of upcoming shows for each venue
+    for venue in venues:
+        shows = Show.query.filter(venue_id = venue.id).all()
+        for show in shows:
+            num_upcoming_shows = 0
+            if(show.start_time > datetime.now()):
+                num_upcoming_shows += 1
+
+        # for each entry, add venues to matching city/state
+        for entry in data:
+            if(venue.city == entry['city'] and venue.state == entry['state']):
+                entry['venues'].append({"id":venue.id, "name":venue.name,"num_upcoming_shows":num_upcoming_shows})
+
+    return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -276,18 +288,19 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
-  data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
-  return render_template('pages/artists.html', artists=data)
+    # TODO: replace with real data returned from querying the database [Done]
+    # MOCK UP :
+    #  data=[{
+    #    "id": 4,
+    #    "name": "Guns N Petals",
+    #  }]
+
+    data = []
+    artists = Artist.query.all()
+    for artist in artists:
+        data.append({"id": artist.id,"name": artist.name})
+
+    return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
@@ -473,6 +486,7 @@ def create_artist_submission():
     except:
         # TODO: on unsuccessful db insert, flash an error instead. [Done]
         flash('An error occurred. Artist ' + request.form['name'] + ' could not be listed.')
+        print(sys.exc_info())
         db.session.rollback()
     finally:
         db.session.close()
@@ -485,46 +499,47 @@ def create_artist_submission():
 
 @app.route('/shows')
 def shows():
-  # displays list of shows at /shows
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "venue_id": 1,
-    "venue_name": "The Musical Hop",
-    "artist_id": 4,
-    "artist_name": "Guns N Petals",
-    "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    "start_time": "2019-05-21T21:30:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 5,
-    "artist_name": "Matt Quevedo",
-    "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-    "start_time": "2019-06-15T23:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-01T20:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-08T20:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-15T20:00:00.000Z"
-  }]
-  return render_template('pages/shows.html', shows=data)
+    # displays list of shows at /shows
+    # TODO: replace with real venues data. [Done]
+    #       num_shows should be aggregated based on number of upcoming shows per venue.
+    # MOCK UP :
+    # data=[{
+    #   "venue_id": 1,
+    #   "venue_name": "The Musical Hop",
+    #   "artist_id": 4,
+    #   "artist_name": "Guns N Petals",
+    #   "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+    #   "start_time": "2019-05-21T21:30:00.000Z"
+    # }, {
+    #   "venue_id": 3,
+    #   "venue_name": "Park Square Live Music & Coffee",
+    #   "artist_id": 5,
+    #   "artist_name": "Matt Quevedo",
+    #   "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
+    #   "start_time": "2019-06-15T23:00:00.000Z"
+    # }]
+
+    data = []
+    # get all shows in Shows table
+    shows = Show.query.all()
+    for show in shows:
+        venue_id = show.venue_id
+        venue = Venue.query.get(id = venue_id)
+        venue_name = venue.name
+        artist_id = show.artist_id
+        artist = Artist.query.get(id = artist_id)
+        artist_name = artist.name
+        artist_image_link = artist.image_link
+        start_time = show.start_time
+
+        data.append({"venue_id": venue_id,
+        "venue_name": venue_name,
+        "artist_id": artist_id,
+        "artist_name": artist_name,
+        "artist_image_link": artist_image_link,
+        "start_time": start_time})
+
+    return render_template('pages/shows.html', shows=data)
 
 @app.route('/shows/create')
 def create_shows():
