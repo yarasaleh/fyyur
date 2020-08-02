@@ -12,6 +12,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from flask_migrate import Migrate
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -20,8 +21,9 @@ app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
-# TODO: connect to a local postgresql database
+# TODO: connect to a local postgresql database [DONE]
 
 #----------------------------------------------------------------------------#
 # Models.
@@ -38,8 +40,9 @@ class Venue(db.Model):
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    artists = db.relationship('Artist',backref = 'artists' , lazy = True)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+    # TODO: implement any missing fields, as a database migration using Flask-Migrate [DONE]
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -52,10 +55,17 @@ class Artist(db.Model):
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    venue_id = db.Column(db.Integer , db.ForeignKey('Venue.id'))
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+    # TODO: implement any missing fields, as a database migration using Flask-Migrate [DONE]
 
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration. [DONE]
+class Show(db.Model):
+    __tabelname__ : 'Show'
+    
+    artist_id = db.Column(db.Integer , db.ForeignKey('Artist.id'), primary_key=True)
+    venue_id = db.Column(db.Integer , db.ForeignKey('Venue.id'), primary_key=True)
+    start_time = db.Column(db.DateTime , nullable=False)
 
 #----------------------------------------------------------------------------#
 # Filters.
