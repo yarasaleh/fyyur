@@ -401,55 +401,106 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-  form = ArtistForm()
-  artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  }
-  # TODO: populate form with fields from artist with ID <artist_id>
-  return render_template('forms/edit_artist.html', form=form, artist=artist)
+
+    form = ArtistForm()
+    artist_data = Artist.query.filter_by(id = artist_id).first()
+
+    artist={
+    "id": artist_id,
+    "name": artist_data.name,
+    "genres": artist_data.genres,
+    "city": artist_data.city,
+    "state": artist_data.state,
+    "phone": artist_data.phone,
+    "website": artist_data.website,
+    "facebook_link": artist_data.facebook_link,
+    "seeking_venue": artist_data.seeking_venue,
+    "seeking_description": artist_data.seeking_description,
+    "image_link": artist_data.image_link
+    }
+    # TODO: populate form with fields from artist with ID <artist_id> [Done]
+    return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-  # TODO: take values from the form submitted, and update existing
-  # artist record with ID <artist_id> using the new attributes
+    # TODO: take values from the form submitted, and update existing [Done]
+    # artist record with ID <artist_id> using the new attributes
+    try:
+        form = ArtistForm()
+        artist = Artist.query.filter_by(id = artist_id).first()
+        artist.name = form.name.data
+        artist.city = form.city.data
+        artist.state = form.state.data
+        artist.phone = form.phone.data
+        artist.genres = form.genres
+        artist.image_link = form.image_link.data
+        artist.website = form.website.data
+        artist.facebook_link = form.facebook_link.data
+        artist.seeking_venue = True if form.seeking_venue.data == 'Yes' else False
+        artist.seeking_description = form.seeking_description.data
 
-  return redirect(url_for('show_artist', artist_id=artist_id))
+        db.session.commit()
+        flash('Artist ' + request.form['name'] + ' was successfully listed!')
+    except:
+        flash('An error occurred. Artist ' + request.form['name'] + ' could not be listed.')
+        print(sys.exc_info())
+        db.session.rollback()
+    finally:
+        db.session.close()
+
+    return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-  form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  }
-  # TODO: populate form with values from venue with ID <venue_id>
-  return render_template('forms/edit_venue.html', form=form, venue=venue)
+    form = VenueForm()
+    veneu_data = Venue.query.filter_by(id = venue_id).first()
+
+    venue={
+    "id": venue_id,
+    "name": veneu_data.name,
+    "genres": veneu_data.genres,
+    "address": veneu_data.address,
+    "city": veneu_data.city,
+    "state": veneu_data.state,
+    "phone": veneu_data.phone,
+    "website": veneu_data.website,
+    "facebook_link": veneu_data.facebook_link,
+    "seeking_talent": True if veneu_data.seeking_talent == 'Yes' else False,
+    "seeking_description": veneu_data.seeking_description,
+    "image_link": veneu_data.image_link
+    }
+    # TODO: populate form with values from venue with ID <venue_id> [Done]
+    return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
-  # venue record with ID <venue_id> using the new attributes
-  return redirect(url_for('show_venue', venue_id=venue_id))
+    # TODO: take values from the form submitted, and update existing [Done]
+    # venue record with ID <venue_id> using the new attributes
+    try:
+        form = VenueForm()
+        venue = Venue.query.filter_by(id = venue_id).first()
+        venue.name = form.name.data
+        venue.genres = form.genres.data
+        venue.address = form.address.data
+        venue.city = form.city.data
+        venue.state = form.state.data
+        venue.phone = form.phone.data
+        venue.website = form.website.data
+        venue.facebook_link = form.facebook_link.data
+        venue.seeking_talent = form.seeking_talent.data
+        venue.seeking_description = form.seeking_description.data
+        venue.image_link = form.image_link.data
+
+        db.session.commit()
+        flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    except:
+        flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
+        print(sys.exc_info())
+        db.session.rollback()
+    finally:
+        db.session.close()
+
+    return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
 #  ----------------------------------------------------------------
