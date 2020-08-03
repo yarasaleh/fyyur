@@ -14,6 +14,7 @@ from flask_wtf import FlaskForm
 from forms import *
 from flask_migrate import Migrate
 import sys
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -86,7 +87,7 @@ def format_datetime(value, format='medium'):
         format = "EEEE MMMM, d, y 'at' h:mma"
     elif format == 'medium':
         format = "EE MM, dd, y h:mma"
-    return babel.dates.format_datetime(date, format)
+    return babel.dates.format_datetime(date, format, locale='en')
 
 app.jinja_env.filters['datetime'] = format_datetime
 
@@ -169,14 +170,14 @@ def show_venue(venue_id):
     for show in venue_shows_data:
         if(show.start_time > datetime.now()):
             upcoming_shows.append({"artist_id":show.artist_id,
-            "artist_name": Artist.query.filter(id=show.artist_id).first().name,
-            "artist_image_link":Artist.query.filter(id=show.artist_id).first().image_link,
+            "artist_name": Artist.query.filter_by(id=show.artist_id).first().name,
+            "artist_image_link":Artist.query.filter_by(id=show.artist_id).first().image_link,
             "start_time": format_datetime(str(show.start_time))})
             upcoming_shows_count += 1
         else:
             past_shows.append({"artist_id":show.artist_id,
-            "artist_name":Artist.query.filter(id=show.artist_id).first().name,
-            "artist_image_link":Artist.query.filter(id=show.artist_id).first().image_link,
+            "artist_name":Artist.query.filter_by(id=show.artist_id).first().name,
+            "artist_image_link":Artist.query.filter_by(id=show.artist_id).first().image_link,
             "start_time":format_datetime(str(show.start_time))})
             past_shows_count +=1
 
@@ -319,16 +320,16 @@ def show_artist(artist_id):
         if(show.start_time > datetime.now()):
             upcoming_shows.append({
               "venue_id": show.venue_id,
-              "venue_name": Venue.query.filter(id=show.venue_id).first().name,
-              "venue_image_link": Venue.query.filter(id=show.venue_id).first().image_link,
+              "venue_name": Venue.query.filter_by(id=show.venue_id).first().name,
+              "venue_image_link": Venue.query.filter_by(id=show.venue_id).first().image_link,
               "start_time": format_datetime(str(show.start_time))
             })
             upcoming_shows_count+=1
         else:
             past_shows.append({
               "venue_id": show.venue_id,
-              "venue_name": Venue.query.filter(id=show.venue_id).first().name,
-              "venue_image_link": Venue.query.filter(id=show.venue_id).first().image_link,
+              "venue_name": Venue.query.filter_by(id=show.venue_id).first().name,
+              "venue_image_link": Venue.query.filter_by(id=show.venue_id).first().image_link,
               "start_time": format_datetime(str(show.start_time))
             })
             past_shows_count+=1
@@ -497,12 +498,10 @@ def shows():
     shows = Show.query.all()
     for show in shows:
         venue_id = show.venue_id
-        venue = Venue.query.get(venue_id)
-        venue_name = venue.name
+        venue_name = Venue.query.filter_by(id=show.venue_id).first().name
         artist_id = show.artist_id
-        artist = Artist.query.get(artist_id)
-        artist_name = artist.name
-        artist_image_link = artist.image_link
+        artist_name = Artist.query.filter_by(id=show.artist_id).first().name
+        artist_image_link = Artist.query.filter_by(id=show.artist_id).first().image_link
         start_time = format_datetime(str(show.start_time))
 
         data.append({"venue_id": venue_id,
@@ -528,7 +527,7 @@ def create_show_submission():
         # id = form.id.data
         artist_id = form.artist_id.data
         venue_id = form.venue_id.data
-        start_time = form.start_time.data
+        start_time = request.form['start_time']
 
         # create new Show from form data
         new_show = Show(artist_id = artist_id , venue_id = venue_id , start_time = start_time)
