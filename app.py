@@ -48,6 +48,9 @@ class Venue(db.Model):
     genres = db.Column("genres", db.ARRAY(db.String()), nullable=False)
     shows = db.relationship('Show', backref='venue', lazy=True)
 
+    def __repr__(self):
+        return f'<Venue : {self.id} {self.name}>'
+
     # TODO: implement any missing fields, as a database migration using Flask-Migrate [DONE]
 
 class Artist(db.Model):
@@ -66,6 +69,9 @@ class Artist(db.Model):
     facebook_link = db.Column(db.String(120))
     shows = db.relationship('Show', backref='artist', lazy=True)
 
+    def __repr__(self):
+        return f'<Artist : {self.id} {self.name}>'
+
     # TODO: implement any missing fields, as a database migration using Flask-Migrate [DONE]
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration. [DONE]
@@ -76,6 +82,9 @@ class Show(db.Model):
     artist_id = db.Column(db.Integer , db.ForeignKey('Artist.id'), nullable=False)
     venue_id = db.Column(db.Integer , db.ForeignKey('Venue.id'), nullable=False)
     start_time = db.Column(db.DateTime , nullable=False)
+
+    def __repr__(self):
+        return f'<Show : {self.id}>'
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -212,6 +221,8 @@ def show_venue(venue_id):
             continue
         else:
             genre += x
+    if(len(genres) == 0):
+        genres.append(genre)
     data = {
         "id": venue_id,
         "name": venue_data.name,
@@ -378,6 +389,8 @@ def show_artist(artist_id):
             continue
         else:
             genre += x
+    if(len(genres) == 0):
+        genres.append(genre)
     data={
         "id": artist_id,
         "name": artist_data.name,
@@ -401,12 +414,11 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-
     form = ArtistForm()
     artist_data = Artist.query.filter_by(id = artist_id).first()
 
     artist={
-    "id": artist_id,
+    "id": artist_data.id,
     "name": artist_data.name,
     "genres": artist_data.genres,
     "city": artist_data.city,
@@ -418,6 +430,10 @@ def edit_artist(artist_id):
     "seeking_description": artist_data.seeking_description,
     "image_link": artist_data.image_link
     }
+     # set placeholders in form SelectField dropdown menus to current data
+    form.state.process_data(artist['state'])
+    form.genres.process_data(artist['genres'])
+    form.seeking_venue.process_data(artist['seeking_venue'])
     # TODO: populate form with fields from artist with ID <artist_id> [Done]
     return render_template('forms/edit_artist.html', form=form, artist=artist)
 
@@ -425,14 +441,15 @@ def edit_artist(artist_id):
 def edit_artist_submission(artist_id):
     # TODO: take values from the form submitted, and update existing [Done]
     # artist record with ID <artist_id> using the new attributes
+
     try:
-        form = ArtistForm()
+        form = ArtistForm(request.form)
         artist = Artist.query.filter_by(id = artist_id).first()
         artist.name = form.name.data
         artist.city = form.city.data
         artist.state = form.state.data
         artist.phone = form.phone.data
-        artist.genres = form.genres
+        artist.genres = form.genres.data
         artist.image_link = form.image_link.data
         artist.website = form.website.data
         artist.facebook_link = form.facebook_link.data
@@ -440,9 +457,9 @@ def edit_artist_submission(artist_id):
         artist.seeking_description = form.seeking_description.data
 
         db.session.commit()
-        flash('Artist ' + request.form['name'] + ' was successfully listed!')
+        flash('Artist ' + request.form['name'] + ' was successfully edited!')
     except:
-        flash('An error occurred. Artist ' + request.form['name'] + ' could not be listed.')
+        flash('An error occurred. Artist ' + request.form['name'] + ' could not be edited.')
         print(sys.exc_info())
         db.session.rollback()
     finally:
@@ -456,7 +473,7 @@ def edit_venue(venue_id):
     veneu_data = Venue.query.filter_by(id = venue_id).first()
 
     venue={
-    "id": venue_id,
+    "id": veneu_data.id,
     "name": veneu_data.name,
     "genres": veneu_data.genres,
     "address": veneu_data.address,
@@ -465,7 +482,7 @@ def edit_venue(venue_id):
     "phone": veneu_data.phone,
     "website": veneu_data.website,
     "facebook_link": veneu_data.facebook_link,
-    "seeking_talent": True if veneu_data.seeking_talent == 'Yes' else False,
+    "seeking_talent": veneu_data.seeking_talent,
     "seeking_description": veneu_data.seeking_description,
     "image_link": veneu_data.image_link
     }
@@ -477,7 +494,7 @@ def edit_venue_submission(venue_id):
     # TODO: take values from the form submitted, and update existing [Done]
     # venue record with ID <venue_id> using the new attributes
     try:
-        form = VenueForm()
+        form = VenueForm(request.form)
         venue = Venue.query.filter_by(id = venue_id).first()
         venue.name = form.name.data
         venue.genres = form.genres.data
@@ -487,14 +504,14 @@ def edit_venue_submission(venue_id):
         venue.phone = form.phone.data
         venue.website = form.website.data
         venue.facebook_link = form.facebook_link.data
-        venue.seeking_talent = form.seeking_talent.data
+        venue.seeking_talent = True if form.seeking_talent.data == 'Yes' else False
         venue.seeking_description = form.seeking_description.data
         venue.image_link = form.image_link.data
 
         db.session.commit()
-        flash('Venue ' + request.form['name'] + ' was successfully listed!')
+        flash('Venue ' + request.form['name'] + ' was successfully edited!')
     except:
-        flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
+        flash('An error occurred. Venue ' + request.form['name'] + ' could not be edited.')
         print(sys.exc_info())
         db.session.rollback()
     finally:
